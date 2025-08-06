@@ -4,6 +4,7 @@ const router = express.Router();
 // ✅ Import models using ES modules
 import HealthGuide from '../models/HealthGuide.js';
 import Immunization from '../models/Immunization.js';
+import FirstAidGuide from '../models/FirstAidGuide.js';
 
 // === HEALTH TIP ROUTES ===
 router.get('/health-tips', async (req, res) => {
@@ -60,6 +61,41 @@ router.post('/medical-resources', async (req, res) => {
     const resource = new MedicalResource(req.body);
     await resource.save();
     res.status(201).json(resource);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+
+router.get('/firstaid-guide', async (req, res) => {
+  try {
+    const { title } = req.query;
+
+    if (title) {
+      // Case-insensitive search
+      const guide = await FirstAidGuide.findOne({ title: new RegExp(`^${title}$`, 'i') });
+
+      if (!guide) {
+        return res.status(404).json({ error: 'First aid guide not found' });
+      }
+
+      return res.json(guide);
+    }
+
+    // If no title provided, return all
+    const guides = await FirstAidGuide.find();
+    res.json(guides);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+router.post('/firstaid-guide', async (req, res) => {
+  try {
+    const guide = new FirstAidGuide(req.body);
+    await guide.save();
+    res.status(201).json(guide);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }

@@ -11,6 +11,7 @@ import fertilizerGuideRoute from './routes/fertilizerGuide.js';
 import agricultureRoutes from "./routes/agricultureRoutes.js";
 import educationRoutes from "./routes/educationRoutes.js";
 import healthcareRoutes from "./routes/healthcareRoutes.js";
+import firstAidGuideRoutes from "./routes/firstAidGuide.js";
 
 // ENV setup
 dotenv.config();
@@ -124,6 +125,7 @@ app.use("/api/agriculture/crop-calendar", cropCalendarRoutes);
 app.use("/api/agriculture/fertilizer-guide", fertilizerGuideRoute);
 app.use("/api/education", educationRoutes);
 app.use("/api/healthcare", healthcareRoutes);
+app.use("/api/healthcare/firstaid-guide", firstAidGuideRoutes);
 
 // Server start
 const PORT = process.env.PORT || 5000;
