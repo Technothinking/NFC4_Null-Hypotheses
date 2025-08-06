@@ -1,4 +1,3 @@
-// client/src/components/AgenticChat.jsx
 import { useState } from "react";
 import { educationAgent, agricultureAgent, healthcareAgent } from "./predefined_queries";
 
@@ -9,6 +8,7 @@ const AgenticChat = () => {
   const [stepIndex, setStepIndex] = useState(0);
   const [messages, setMessages] = useState([]);
   const [language, setLanguage] = useState("en-IN");
+  const [category, setCategory] = useState("education");
 
   const startListening = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -16,6 +16,7 @@ const AgenticChat = () => {
       alert("Your browser does not support voice recognition.");
       return;
     }
+
     const recognition = new SpeechRecognition();
     recognition.lang = language;
     recognition.interimResults = false;
@@ -34,35 +35,22 @@ const AgenticChat = () => {
 
   const fallbackOfflineAnswer = async (input) => {
     const lower = input.toLowerCase();
-    if (lower.includes("education") || lower.includes("quiz") || lower.includes("math") || lower.includes("algebra") || lower.includes("trigonometry") || lower.includes("history") || lower.includes("science")) {
-      return educationAgent(lower);
-    }
-    if (lower.includes("agriculture") || lower.includes("crop") || lower.includes("soil") || lower.includes("irrigation") || lower.includes("pest control")) {
-      return agricultureAgent(lower);
-    }
-    if (lower.includes("health") || lower.includes("vaccine") || lower.includes("exercise") || lower.includes("nutrition") || lower.includes("disease prevention")) {
-      return healthcareAgent(lower);
-    }
-    return "Sorry, I couldn't find relevant information offline. Try connecting to the internet.";
+    if (category === "education") return educationAgent(lower);
+    if (category === "agriculture") return agricultureAgent(lower);
+    if (category === "healthcare") return healthcareAgent(lower);
+    return "⚠️ Sorry, I couldn't find relevant information offline. Try connecting to the internet.";
   };
 
-  const sendToBackend = async (input, currentGoal) => {
+  const sendToBackend = async (input, currentGoal, category) => {
     try {
-      console.log("Sending to backend:", { input, currentGoal });
       const res = await fetch("http://localhost:5000/chat", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ input, currentGoal })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ input, currentGoal, category }),
       });
 
-      if (!res.ok) {
-        throw new Error(`Server error: ${res.status}`);
-      }
-
+      if (!res.ok) throw new Error(`Server error: ${res.status}`);
       const data = await res.json();
-      console.log("Response from backend:", data);
       return data.response;
     } catch (error) {
       console.error("Error sending to backend:", error);
@@ -85,15 +73,14 @@ const AgenticChat = () => {
     }
 
     if (!goal) {
-      const response = await sendToBackend(trimmedInput, null);
+      const response = await sendToBackend(trimmedInput, null, category);
       const newSteps = response.split("\n").filter((line) => /^\d+\./.test(line.trim()));
+
       if (newSteps.length === 0) {
-        setMessages((prev) => [
-          ...prev,
-          { from: "bot", text: "⚠️ Sorry, I couldn't generate a plan. Try a different goal." }
-        ]);
+        setMessages((prev) => [...prev, { from: "bot", text: "⚠️ Couldn't generate a plan. Try a different goal." }]);
         return;
       }
+
       setGoal(trimmedInput);
       setSteps(newSteps);
       setStepIndex(0);
@@ -107,21 +94,15 @@ const AgenticChat = () => {
       const next = stepIndex + 1;
       if (next < steps.length) {
         setStepIndex(next);
-        setMessages((prev) => [
-          ...prev,
-          { from: "bot", text: "✅ Great! Here's your next step:\n" + steps[next] }
-        ]);
+        setMessages((prev) => [...prev, { from: "bot", text: "✅ Next step:\n" + steps[next] }]);
       } else {
-        setMessages((prev) => [
-          ...prev,
-          { from: "bot", text: "🎉 You've completed the plan! Want to set a new goal?" }
-        ]);
+        setMessages((prev) => [...prev, { from: "bot", text: "🎉 You've completed the plan! Want to set a new goal?" }]);
         setGoal(null);
         setSteps([]);
         setStepIndex(0);
       }
     } else {
-      const response = await sendToBackend(trimmedInput, goal);
+      const response = await sendToBackend(trimmedInput, goal, category);
       setMessages((prev) => [...prev, { from: "bot", text: response }]);
     }
 
@@ -130,22 +111,37 @@ const AgenticChat = () => {
 
   return (
     <div className="fixed right-6 bottom-6 w-full max-w-md z-50 md:max-w-sm">
+      {/* Language Selector */}
       <div className="mb-3">
-        <label className="block text-sm font-medium mb-1">Select Language</label>
+        <label className="block text-sm font-medium mb-1">Language</label>
         <select
           onChange={(e) => setLanguage(e.target.value)}
           value={language}
           className="w-full p-2 border rounded text-sm"
         >
           <option value="en-IN">English (India)</option>
-          <option value="hi-IN">Hindi (India)</option>
-          <option value="mr-IN">Marathi (India)</option>
-          <option value="gu-IN">Gujarati (India)</option>
+          <option value="hi-IN">Hindi</option>
+          <option value="mr-IN">Marathi</option>
+          <option value="gu-IN">Gujarati</option>
+        </select>
+      </div>
+
+      {/* Category Selector */}
+      <div className="mb-4">
+        <label className="block text-sm font-medium mb-1">Category</label>
+        <select
+          onChange={(e) => setCategory(e.target.value)}
+          value={category}
+          className="w-full p-2 border rounded text-sm"
+        >
+          <option value="education">Education</option>
+          <option value="agriculture">Agriculture</option>
+          <option value="healthcare">Healthcare</option>
         </select>
       </div>
 
       <div className="bg-white shadow-xl rounded-xl p-4">
-        <h2 className="text-lg font-bold mb-3 text-center">🌾📚🩺 Rural Assistant Chatbot</h2>
+        <h2 className="text-lg font-bold mb-3 text-center">🌾📚🩺 SevaBot</h2>
 
         <div className="bg-gray-100 p-3 rounded h-60 overflow-y-auto mb-3">
           {messages.map((msg, index) => (

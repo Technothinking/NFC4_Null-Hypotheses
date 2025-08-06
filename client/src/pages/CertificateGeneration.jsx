@@ -9,6 +9,7 @@ const CertificateGeneration = () => {
     return localStorage.getItem('smartseva_user_name') || '';
   });
   const [date, setDate] = useState('');
+  const [course, setCourse] = useState('');
 
   const handleDownload = () => {
     const input = certificateRef.current;
@@ -22,20 +23,26 @@ const CertificateGeneration = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
-      <div className="mb-6">
+      <div className="mb-6 flex flex-wrap gap-4 justify-center">
         <input
           type="text"
           placeholder="Enter Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="mb-4 p-2 border border-gray-400 rounded w-64"
+          className="p-2 border border-gray-400 rounded w-64"
+        />
+        <input
+          type="text"
+          placeholder="Enter Course Name"
+          value={course}
+          onChange={(e) => setCourse(e.target.value)}
+          className="p-2 border border-gray-400 rounded w-64"
         />
         <input
           type="date"
-          placeholder="Enter Date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
-          className="mb-4 p-2 border border-gray-400 rounded w-64"
+          className="p-2 border border-gray-400 rounded w-64"
         />
         <button
           onClick={handleDownload}
@@ -54,10 +61,19 @@ const CertificateGeneration = () => {
           alt="Certificate Template"
           className="absolute w-full h-full object-cover"
         />
-        <div className="absolute top-[300px] w-full text-center text-2xl font-semibold text-black">
+
+        {/* Name Placement (unchanged) */}
+        <div className="absolute top-[280px] w-full text-center text-2xl font-semibold text-black">
           {name}
         </div>
-        <div className="absolute bottom-[80px] right-[100px] text-md font-medium text-black">
+
+        {/* Course Placement - on the underline after 'completing the' */}
+        <div className="absolute top-[365px] w-full text-center text-base font-medium text-black">
+          {course}
+        </div>
+
+        {/* Date Placement - aligned with 'Completed on _______' */}
+        <div className="absolute top-[400px] left-[350px] text-base font-medium text-black">
           {date}
         </div>
       </div>

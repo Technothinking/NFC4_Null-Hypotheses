@@ -83,7 +83,8 @@ export default function SignIn() {
         <div className="text-center">
           <h2 className="text-4xl font-bold mb-4">Welcome to SMARTSEVA</h2>
           <p className="text-lg leading-relaxed">
-            Empowering citizens with access to smart government services, all in one place.
+            Bringing essential services to every village — anytime, anywhere. <br />
+    Access education, healthcare, and agriculture support offline through intelligent AI-powered modules.
           </p>
         </div>
       </div>

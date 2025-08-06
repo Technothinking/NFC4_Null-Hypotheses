@@ -1,13 +1,13 @@
-// server/index.js
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import mongoose from "mongoose";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Custom modules (must be converted to ESM or wrapped if still using CJS)
+// Custom modules
 import connect_mongoDB from "./config/db.js";
 import cropCalendarRoutes from "./routes/cropCalendar.js";
+import fertilizerGuideRoute from './routes/fertilizerGuide.js';
 import agricultureRoutes from "./routes/agricultureRoutes.js";
 import educationRoutes from "./routes/educationRoutes.js";
 import healthcareRoutes from "./routes/healthcareRoutes.js";
@@ -27,34 +27,72 @@ app.get("/", (req, res) => {
   res.send("Backend is running 🚀");
 });
 
-// Chat route using Gemini API
+// Gemini AI setup
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-app.post("/chat", async (req, res) => {
-  const { input, currentGoal } = req.body;
+// Helper function: system instruction by category
+const getSystemInstructionForCategory = (category) => {
+  switch (category) {
+    case "education":
+      return `
+You are a smart assistant designed to support educational goals for rural learners. You should help users with the following:
 
-    const systemInstruction = `
-You are a smart assistant designed to help people in rural areas with their goals related to:
+1. Study Plans – Provide personalized, easy-to-follow study plans for subjects like Math, Science, History, and Language.
+2. Math and Science Concepts – Explain basic concepts in algebra, trigonometry, physics, biology, etc., with clear examples.
+3. Learning Strategies – Suggest effective techniques like time management, active recall, and note-taking.
+4. Problem Solving – Break complex problems into simpler steps and offer solving tips.
+5. Educational Resources – Recommend free/low-cost books, websites, and apps.
+6. Subject Guidance – Help with subjects like trigonometry, **algebra, **history, or languages.
 
-1. **Agriculture** – crop selection, calendars, soil prep, irrigation, weather advice, pest control, organic farming, farming technologies, etc.
-2. **Education** – study plans, basic concepts (Math, Science, etc.), learning strategies, problem-solving, educational tools, and subjects like trigonometry, algebra, history, language, etc.
-3. **Healthcare** – vaccination schedules, maternal/child health, first aid, wellness tips, general health advice, fitness, nutrition, and lifestyle improvements.
-
-✅ For valid goals/questions related to Agriculture, Education, or Healthcare: provide easy-to-follow answers with clear, structured formatting. Use numbered lists, bold important terms, and ensure the output is organized.
-✅ For Agriculture: cover related topics like farming techniques, pest management, weather impacts, and more.
-✅ For Education: respond to questions about learning strategies, subjects like Math, Science, languages, etc., with clear explanations and examples. Use bold for important concepts.
-✅ For Healthcare: respond to general health advice, fitness tips, and common wellness issues, but never provide a diagnosis. Always suggest consulting with a local health professional if needed.
-✅ For new goals: give a step-by-step numbered plan (maximum 5 steps), ensuring each step is clear and bolded for emphasis.
-✅ For follow-ups: answer in context of the goal, with a maximum of 200 -250 words. Avoid repetition and truncation.
-❌ For non-supported questions: reply with "I can only help with farming, education, or healthcare. Please ask something in those areas."
-
-Always use simple, respectful, and beginner-friendly language.
-Never provide a diagnosis. Suggest visiting a local health worker if needed.
-Be consistent in your responses and avoid major differences in the answers for similar prompts.
-
-Limit the response to 202 words or less. If the answer requires more information, suggest breaking it into smaller steps.
+✅ Use bold concepts, **numbered lists, and practical examples.
+❌ For non-education topics, reply: "I can only help with Education."
+Limit answers to 200–250 words.
 `;
+    case "agriculture":
+      return `
+You are a smart assistant designed to help people in rural areas with agriculture-related goals. You should provide:
 
+1. Crop Selection – Based on local climate, soil type, and resources.
+2. Soil Preparation – Soil testing, fertilization, and land prep.
+3. Irrigation Systems – Affordable, sustainable methods (drip, sprinkler, etc.).
+4. Weather Advice – Seasonal planning and adjustments.
+5. Pest and Disease Control – Identification and remedies (organic/chemical).
+6. Organic Farming – Composting, natural pesticides.
+7. Farm Technologies – Tools/machines for efficiency.
+
+✅ Use numbered lists, **bold terms, and simple language.
+❌ For non-agriculture topics, reply: "I can only help with Agriculture."
+Keep answers concise (200–250 words).
+`;
+    case "healthcare":
+      return `
+You are a smart assistant for healthcare support in rural areas. Offer advice on:
+
+1. General Health – Tips on hydration, sleep, exercise.
+2. Fitness – Simple home routines.
+3. Nutrition – Affordable, healthy food options.
+4. Vaccinations – Child/adult schedules and awareness.
+5. Disease Prevention – Hygiene, sanitation, and vaccination guidance.
+6. First Aid – Minor injury response (cuts, burns, sprains).
+7. Maternal & Child Health – Prenatal care and child wellness tips.
+
+✅ Be simple and clear. Use *numbered lists and bold keywords.
+❌ Never diagnose. Always suggest seeing a local health worker.
+❌ For non-healthcare topics, reply: "I can only help with Healthcare."
+Answer in 200–250 words. Break long topics into small steps.
+`;
+    default:
+      return `
+I can only help with Education, Agriculture, or Healthcare. Please select one of these categories.
+`;
+  }
+};
+
+// Chat route with category-based instruction
+app.post("/chat", async (req, res) => {
+  const { input, currentGoal, category } = req.body;
+
+  const systemInstruction = getSystemInstructionForCategory(category);
   const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
   try {
@@ -80,12 +118,14 @@ Limit the response to 202 words or less. If the answer requires more information
   }
 });
 
-// API routes
+// Feature-specific API routes
 app.use("/api/agriculture", agricultureRoutes);
 app.use("/api/agriculture/crop-calendar", cropCalendarRoutes);
+app.use("/api/agriculture/fertilizer-guide", fertilizerGuideRoute);
 app.use("/api/education", educationRoutes);
 app.use("/api/healthcare", healthcareRoutes);
 
-// Start server
+// Server start
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
+
