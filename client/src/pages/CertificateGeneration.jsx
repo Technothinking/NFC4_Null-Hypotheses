@@ -1,52 +1,68 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import certificateTemplate from '../assets/certificate_template.jpg';
 
-export default function CertificateGeneration() {
+const CertificateGeneration = () => {
+  const certificateRef = useRef();
+  const [name, setName] = useState(() => {
+    return localStorage.getItem('smartseva_user_name') || '';
+  });
+  const [date, setDate] = useState('');
+
+  const handleDownload = () => {
+    const input = certificateRef.current;
+    html2canvas(input).then((canvas) => {
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('landscape', 'px', [canvas.width, canvas.height]);
+      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+      pdf.save(`${name}_certificate.pdf`);
+    });
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-yellow-100 text-gray-800">
-      {/* Header */}
-      <header className="bg-yellow-600 text-white py-4 px-8 shadow-md flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Certificate Generator</h1>
-        <a
-          href="/education"
-          className="bg-white text-yellow-700 px-4 py-2 rounded shadow hover:bg-yellow-100 transition"
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
+      <div className="mb-6">
+        <input
+          type="text"
+          placeholder="Enter Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="mb-4 p-2 border border-gray-400 rounded w-64"
+        />
+        <input
+          type="date"
+          placeholder="Enter Date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          className="mb-4 p-2 border border-gray-400 rounded w-64"
+        />
+        <button
+          onClick={handleDownload}
+          className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
         >
-          Back to Dashboard
-        </a>
-      </header>
+          Download Certificate
+        </button>
+      </div>
 
-      {/* Main Content */}
-      <main className="flex flex-col items-center justify-center flex-grow py-20 px-4">
-        <div className="bg-white rounded-lg shadow-lg p-8 max-w-lg w-full text-center">
-          <h2 className="text-2xl font-semibold mb-6">Generate Your Certificate</h2>
-
-          <form className="space-y-4">
-            <div>
-              <label className="block text-left font-medium mb-1">Full Name</label>
-              <input
-                type="text"
-                className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                placeholder="Enter your name"
-              />
-            </div>
-
-            <div>
-              <label className="block text-left font-medium mb-1">Course/Event</label>
-              <input
-                type="text"
-                className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                placeholder="e.g., DataHack 2025"
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-6 rounded transition"
-            >
-              Generate
-            </button>
-          </form>
+      <div
+        ref={certificateRef}
+        className="relative w-[800px] h-[600px] border-2 border-gray-300 shadow-lg"
+      >
+        <img
+          src={certificateTemplate}
+          alt="Certificate Template"
+          className="absolute w-full h-full object-cover"
+        />
+        <div className="absolute top-[300px] w-full text-center text-2xl font-semibold text-black">
+          {name}
         </div>
-      </main>
+        <div className="absolute bottom-[80px] right-[100px] text-md font-medium text-black">
+          {date}
+        </div>
+      </div>
     </div>
   );
-}
+};
+
+export default CertificateGeneration;
