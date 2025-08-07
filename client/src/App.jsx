@@ -34,7 +34,7 @@ function App() {
         <Route path="/education/certificate-generation" element={<CertificateGeneration />} />
         <Route path="/agriculture/crop-calendar" element={<CropCalendar />} />
         <Route path="/weather-alerts" element={<WeatherAlerts />} />
-        <Route path="/fertilizer-guide" element={<FertilizerGuide />} />
+        <Route path="/agriculture/fertilizer-guide" element={<FertilizerGuide />} />
       </Routes>
   );
 }

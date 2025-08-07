@@ -56,6 +56,7 @@ router.get('/medical-resources', async (req, res) => {
   }
 });
 
+
 router.post('/medical-resources', async (req, res) => {
   try {
     const resource = new MedicalResource(req.body);
@@ -103,3 +104,5 @@ router.post('/firstaid-guide', async (req, res) => {
 
 // ✅ Export router
 export default router;
+
+

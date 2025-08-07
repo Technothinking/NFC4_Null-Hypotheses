@@ -55,14 +55,27 @@ router.post("/weather-alert", async (req, res) => {
 // ---------------- Fertilizer Guide ----------------
 
 // GET all fertilizer guides
-router.get("/fertilizer-guide", async (req, res) => {
+router.get('/fertilizer-guide', async (req, res) => {
   try {
-    const guides = await FertilizerGuide.find();
-    res.json(guides);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const { cropName } = req.query;
+
+    if (!cropName) {
+      return res.status(400).json({ message: 'cropName query parameter is required.' });
+    }
+
+    const guides = await FertilizerGuide.find({ cropName: cropName });
+
+    if (guides.length === 0) {
+      return res.status(404).json({ message: 'No guides found for the specified crop.' });
+    }
+
+    res.status(200).json(guides);
+  } catch (error) {
+    console.error('Error fetching fertilizer guides:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 });
+
 
 // POST a new fertilizer guide
 router.post("/fertilizer-guide", async (req, res) => {
